@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.venv/
+venv/
+*.egg-info/
+
+# Archive gehoeren nicht ins Repo, etwa ein Zip der Integration zum Hochladen.
+*.zip

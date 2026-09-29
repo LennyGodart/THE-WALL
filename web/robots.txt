@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /device
+Disallow: /settings
+Disallow: /admin
+Disallow: /api/
+Disallow: /map

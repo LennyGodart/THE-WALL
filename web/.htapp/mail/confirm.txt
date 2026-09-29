@@ -1,0 +1,25 @@
+THE WALL
+
+Confirm your email address
+
+Hello {{USER}}, one click and your account is open. After that you get the key that pairs your device with the website.
+
+The link works for 24 hours:
+{{URL}}
+
+--
+DEUTSCH
+
+E-Mail-Adresse bestätigen
+
+Hallo {{USER}}, ein Klick und dein Konto ist offen. Danach bekommst du den Schlüssel, der dein Gerät mit der Webseite verbindet. Der Link gilt 24 Stunden:
+{{URL}}
+
+--
+You are getting this because somebody signed up with this address at thewall.godart.lu. If that was not you, ignore this email and nothing happens, the account stays unconfirmed and is removed after seven days.
+
+Diese Mail kam, weil sich jemand mit dieser Adresse angemeldet hat. Warst du das nicht, ignoriere sie einfach. Das Konto bleibt unbestätigt und wird nach sieben Tagen gelöscht.
+
+THE WALL, {{IMPRINT}}
+Privacy / Datenschutz: {{BASE}}/legal#privacy
+Legal notice / Impressum: {{BASE}}/legal#imprint

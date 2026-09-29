@@ -1,0 +1,29 @@
+THE WALL
+
+{{INVITER}} shared a panel with you
+
+{{INVITER}} invited you to the device {{DEVICE}}, a 128 by 64 LED panel showing the aircraft over Luxembourg.
+
+You may watch it and write notes on it. Changing its modes stays with the owner.
+
+Accept the invitation:
+{{URL}}
+
+--
+DEUTSCH
+
+{{INVITER}} hat ein Panel mit dir geteilt
+
+{{INVITER}} hat dich zum Gerät {{DEVICE}} eingeladen, einem LED-Panel mit 128 mal 64 Pixeln, das die Flugzeuge über Luxemburg zeigt. Du darfst zusehen und Notizen schreiben.
+
+Einladung annehmen:
+{{URL}}
+
+--
+You are getting this because {{INVITER}} entered this address. If you do not know them, ignore the email, no account is created and the invitation expires after seven days.
+
+Diese Mail kam, weil {{INVITER}} diese Adresse eingetragen hat. Kennst du die Person nicht, ignoriere sie. Es wird kein Konto angelegt, und die Einladung verfällt nach sieben Tagen.
+
+THE WALL, {{IMPRINT}}
+Privacy / Datenschutz: {{BASE}}/legal#privacy
+Legal notice / Impressum: {{BASE}}/legal#imprint

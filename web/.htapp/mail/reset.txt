@@ -1,0 +1,23 @@
+THE WALL
+
+Set a new password
+
+Somebody asked for a new password for {{USER}}. If that was you, open this link. It expires in one hour and works once:
+{{URL}}
+
+--
+DEUTSCH
+
+Neues Passwort setzen
+
+Jemand hat ein neues Passwort für {{USER}} angefordert. Warst du das, öffne diesen Link. Er gilt eine Stunde und funktioniert einmal:
+{{URL}}
+
+--
+If you did not ask for this, ignore the email. Your password stays as it is and nobody gains access. Nothing changes until the link is opened.
+
+Hast du das nicht angefordert, ignoriere die Mail. Dein Passwort bleibt wie es ist, und niemand bekommt Zugang.
+
+THE WALL, {{IMPRINT}}
+Privacy / Datenschutz: {{BASE}}/legal#privacy
+Legal notice / Impressum: {{BASE}}/legal#imprint

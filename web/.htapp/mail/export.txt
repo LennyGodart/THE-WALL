@@ -1,0 +1,18 @@
+THE WALL
+
+Your data
+
+Hello {{USER}}, attached is everything stored about your account: account, devices, settings, notes. The file is called {{FILE_NAME}}.
+
+--
+DEUTSCH
+
+Deine Daten
+
+Hallo {{USER}}, im Anhang liegt alles, was zu deinem Konto gespeichert ist: Konto, Geräte, Einstellungen, Notizen. Die Datei heißt {{FILE_NAME}}.
+
+--
+You are getting this because the export was requested in the settings of this account.
+Diese Mail kam, weil in den Einstellungen dieses Kontos der Export angefordert wurde.
+
+THE WALL, {{IMPRINT}}

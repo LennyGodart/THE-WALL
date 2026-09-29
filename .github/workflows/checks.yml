@@ -1,0 +1,90 @@
+name: Checks
+
+# Jeder Push und jeder Pull Request im oeffentlichen Repo und in Forks. In einem privaten
+# Repo, etwa der Werkstatt, laufen die Jobs nicht: dort wird lokal geprueft.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  php:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: pdo_sqlite, mbstring, curl, sodium, openssl, intl, gd, zlib
+          ini-values: allow_url_fopen=On
+          coverage: none
+      - name: Syntax
+        run: git ls-files '*.php' | while read -r f; do php -l "$f" > /dev/null || exit 1; done
+      - name: Checks without a server
+        env:
+          TW_ENV: dev
+        run: |
+          for f in auth device flight timer transit transit-mode spotify; do
+            echo "== $f"
+            php "tools/$f-fixtures.php"
+          done
+      - name: Home Assistant interface over HTTP
+        env:
+          TW_ENV: dev
+        run: |
+          php -S 127.0.0.1:8765 -t web tools/dev-router.php > dev-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8765/account && break; sleep 1; done
+          php tools/ha-fixtures.php http://127.0.0.1:8765
+      - name: Server log
+        if: failure()
+        run: tail -n 100 dev-server.log web/.htdata/logs/*.log 2>/dev/null || true
+
+  javascript:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Syntax
+        run: git ls-files 'web/assets/js/*.js' 'tools/*.mjs' 'firmware/tools/*.mjs' 'hardware/*.mjs' | while read -r f; do node --check "$f" || exit 1; done
+
+  firmware:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: platformio-${{ hashFiles('firmware/platformio.ini') }}
+      - name: Build
+        run: |
+          pip install platformio
+          pio run -d firmware -e wall
+
+  homeassistant:
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: homeassistant
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - name: Install
+        run: pip install -r requirements_test.txt ruff
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Tests
+        run: python -m pytest tests -q

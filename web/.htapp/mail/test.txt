@@ -1,0 +1,20 @@
+THE WALL
+
+The mail settings work
+
+This is a test from the admin area of thewall.godart.lu. Confirmation links, password links and invitations go out the same way.
+
+Sent {{SENT_AT}} through {{SMTP_HOST}}.
+
+--
+DEUTSCH
+
+Die Mail-Einstellungen funktionieren
+
+Das ist ein Test aus dem Admin-Bereich von thewall.godart.lu. Bestätigungen, Passwort-Links und Einladungen gehen denselben Weg.
+
+--
+You are getting this because someone pressed the test button in the admin area.
+Diese Mail kam, weil jemand im Admin-Bereich auf den Testknopf gedrückt hat.
+
+THE WALL, {{IMPRINT}}

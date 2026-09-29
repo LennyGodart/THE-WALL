@@ -1,0 +1,21 @@
+# Serverdaten: Datenbankzugang, Geheimnisse, lokale SQLite, Logs, Firmware-Dateien.
+# Vorlage fuer die Konfiguration: web/.htapp/config.example.php
+web/.htdata/
+
+# Betriebssystem
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Airline-Logos: heruntergeladene Sammlung und Vorschau (eingetragene Marken, nie ins Repo)
+tools/.logo-cache/
+
+# PlatformIO: Build-Ausgabe und heruntergeladene Bibliotheken
+firmware/.pio/
+firmware/.vscode/
+
+# Geodaten-Rohdateien fuer tools/geo-welt.mjs (74 MB, werden bei Bedarf neu geladen)
+tools/.geo-cache/
+
+# Cover und Schrift fuer den Spotify-Entwurf (Cover sind geschuetzt, bleiben lokal)
+design/spotify/.cache/

@@ -1,0 +1,8 @@
+# Textdateien im Repo mit LF speichern, Binaerdateien nie umwandeln
+* text=auto
+# Shell-Skripte immer mit LF, auch unter Git fuer Windows, sonst bricht bash tools/dev-server.sh
+*.sh text eol=lf
+*.pdf binary
+*.png binary
+*.stl binary
+.thumbnail binary

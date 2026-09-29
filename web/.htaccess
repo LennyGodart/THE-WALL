@@ -1,0 +1,15 @@
+# Fuer Apache. Auf dem CloudPanel-Server (nginx) gilt stattdessen dessen Vhost:
+# alles unter /.ht... ist gesperrt, fehlende Dateien gehen an index.php.
+Options -Indexes
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Apache reicht den Kopf Authorization sonst nicht an PHP-FPM oder CGI weiter, das
+  # Geraet saehe dauerhaft SCHLUESSEL ABGELEHNT. PHP findet ihn danach in
+  # REDIRECT_HTTP_AUTHORIZATION (api/device.php). CGIPassAuth ginge auch, braucht in
+  # einer .htaccess aber AllowOverride AuthConfig und endet sonst mit 500.
+  RewriteCond %{HTTP:Authorization} .
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  RewriteRule (^|/)\.(ht|svn|git) - [F,L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [QSA,L]
+</IfModule>
