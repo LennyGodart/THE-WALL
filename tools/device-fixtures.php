@@ -63,6 +63,14 @@ q('UPDATE rate_limits SET window_start = window_start - 61 WHERE k = ?', ['test:
 check('Zaehler: nach dem Fenster wieder frei, von vorn gezaehlt', rl_allow('test:zaehler', 2, 60) && (int) qval('SELECT hits FROM rate_limits WHERE k = ?', ['test:zaehler']) === 1);
 rl_reset('test:zaehler');
 
+// Segment-Uhr: die Geisterrahmen haben die Farbe der Uhr, ein Sechstel so hell (ab Firmware 0.2.2).
+// Gerundet wie in device.js (Math.round): 255 / 6 = 42,5 wird 43.
+check('Segment-Uhr: Bernstein bleibt dunkles Bernstein', clock_ghost('FFAA00') === '2B1C00');
+check('Segment-Uhr: Cyan wird dunkles Cyan, Weiss dunkles Grau', clock_ghost('#35D6FF') === '09242B' && clock_ghost('FFFFFF') === '2B2B2B');
+$op = op_clock(10, 20, 2, '35D6FF', true, false, true);
+check('Segment-Uhr: der Befehl traegt g', ($op['g'] ?? '') === '09242B');
+check('Andere Zifferblaetter ohne g', !isset(op_clock(10, 20, 2, '35D6FF', true, false, false)['g']));
+
 // Uhrzeit im Frame: die Mitte zwischen Anfrage und Antwort, nicht der Beginn des Rechnens.
 check('Uhrzeit: eine Sekunde gerechnet, die Mitte', frame_clock_ms(1790000000.0, 1790000001.0) === 1790000000500);
 check('Uhrzeit: ohne Rechenzeit dieselbe', frame_clock_ms(1790000000.25, 1790000000.25) === 1790000000250);

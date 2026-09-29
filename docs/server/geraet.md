@@ -87,7 +87,7 @@ Nach 50 Versuchen mit demselben falschen Schlüssel in einer Stunde antwortet de
 | `bar` | `x, y, w, h, c` | Balken, `h` 2 wenn fehlt |
 | `frame` | `x, y, w, h, c` | Rahmen |
 | `logo` | `code, x, y` | Airline-Logo 32×34 in Vollfarbe, holt das Gerät über `/api/v1/logo/{code}` und legt es in seinen Dateispeicher; bei 404 Farbblock mit Kürzel |
-| `clock` | `x, y, z, c, h24, sec, seg, ap` | Uhrzeit, rechnet das Gerät aus seiner RTC. Ohne `h24` gelten 24 Stunden. Mit `ap` (nur bei 12 Stunden und `z` über 1) stehen AM und PM klein neben den Ziffern, unten bündig, 4 Spalten Abstand; `seg` rahmt nur Ziffern. Ohne `sec` und ohne `seg` blinkt der Doppelpunkt ab Firmware 0.1.2 im Sekundentakt, außer mit `motion: reduce` |
+| `clock` | `x, y, z, c, h24, sec, seg, g, ap` | Uhrzeit, rechnet das Gerät aus seiner RTC. Ohne `h24` gelten 24 Stunden. Mit `ap` (nur bei 12 Stunden und `z` über 1) stehen AM und PM klein neben den Ziffern, unten bündig, 4 Spalten Abstand; `seg` rahmt nur Ziffern. `g` ist die Farbe dieser Rahmen, ab Firmware 0.2.2: die Uhrfarbe mit einem Sechstel der Helligkeit (`clock_ghost()`), ältere zeichnen sie fest in `2A2000`. Ohne `sec` und ohne `seg` blinkt der Doppelpunkt ab Firmware 0.1.2 im Sekundentakt, außer mit `motion: reduce` |
 | `date` | `y, c, lang` | Datum mittig, ebenfalls vom Gerät |
 | `anim` | `id` | eingebaute Animation: `boot`, `wifi`, `connecting`, `address`, `paired`, `modeswap`, `waiting`, `note`, `resting`, `noserver`, `nowifi`, `updating`, `poweroff`, `pixeldemo`. Ein unbekannter Name zeichnet nichts |
 | `prog` | `x, x1, y, b, hy, t0, d, c, s, soon, p, pl, nl, nh` | Zeitleiste, die das Gerät selbst weiterzählt (Spotify). Balken von `x` bis `x1` in Zeile `b` (2 hoch), gespielt in `c`, der Rest als Punkte in jeder zweiten Spalte, Kopf weiß ab `hy`. Darüber in Zeile `y` die laufende Zeit über dem Kopf, das Ende rechts, mit `s` links 0:00, jeweils nur, wenn Platz ist. `t0` ist der Beginn des Titels in Millisekunden seit 1970, `d` die Länge. Mit `soon` werden die Punkte in den letzten zehn Sekunden bernsteinfarben. `p` ist die Position in der Pause: dann grau, statt der Zeit `pl` (PAUSE). `nl` ohne Zeiten, `nh` ohne Kopf. Ab Firmware 0.2.0 |
@@ -184,7 +184,7 @@ Testgeräte (Spalte `test`) legt der Admin für ein Konto an, damit es die Gerä
 
 Extern genutzt von: `api/device.php`, `api/web.php`, `pages/admin.php`, `pages/device.php`, `pages/settings.php`, `views/admin.php`, `views/device.php`, `views/settings.php`
 
-## device/frame.php (24)
+## device/frame.php (25)
 
 Baut die Antwort oben. Dieselbe Funktion liefert die Vorschau im Browser (`POST /api/preview/{id}` mit dem Entwurf), die Vorschau zeigt also genau, was das Panel bekommt.
 
@@ -194,6 +194,7 @@ Baut die Antwort oben. Dieselbe Funktion liefert die Vorschau im Browser (`POST 
 - `note_front_left(array $settings, ?int $now = null): int` Sekunden, die eine neue Notiz noch vor dem gewählten Modus steht, 0 ohne Text oder nach dem Ausblenden (`note_at` 0)
 - `frame_mode_pages(string $modeId, array $ctx, float $from, float $to): array` fängt Fehler eines Modus ab und zeigt "FEHLER"
 - `frame_page(float $from, float $to, array $ops, array $extra = []): array`
+- `clock_ghost(string $c): string` Farbe der Geisterrahmen im Segment-Gesicht, jeder Kanal der Uhrfarbe durch sechs, wie `ghostOf()` in `device.js`
 - `frame_clock_ms(float $received, float $sent): int` die Uhrzeit für das Gerät, die Mitte zwischen Eingang der Anfrage und Antwort, siehe `now` oben
 - `frame_slots(float $from, float $to, float $len): array`
 - `frame_hello(array $owner, string $lang): array`

@@ -364,9 +364,11 @@ void render(Grid &g, JsonObjectConst page, const Ctx &ctx) {
       if (ctx.local && !(op["sec"] | false) && !seg && !ctx.reduce && (ctx.local->tm_sec & 1) && txt[2] == ':') txt[2] = ' ';
       if (seg) {
         // Geisterrahmen nur hinter Ziffern, nicht hinter Doppelpunkt, Leerzeichen, AM oder PM.
+        // Ab 0.2.2 in der Farbe aus g, die der Server aus der Uhrfarbe rechnet; ohne g Bernstein.
+        uint32_t ghost = parseColour(op["g"] | "", 0x2A2000);
         for (int i = 0; txt[i]; i++) {
           if (txt[i] < '0' || txt[i] > '9') continue;
-          g.frame(x + i * 6 * z, y, 5 * z, 7 * z, 0x2A2000);
+          g.frame(x + i * 6 * z, y, 5 * z, 7 * z, ghost);
         }
       }
       g.text(x, y, txt, col, z, true);

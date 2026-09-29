@@ -26,6 +26,23 @@ $sw = static function (string $key, bool $checked, string $labelId, string $titl
 $row = static function (string $key, string $value, bool $checked, string $en, string $de) use ($on, $dis): string {
     return '<button type="button" class="rrow" role="radio" data-set="' . h($key) . '" data-value="' . h($value) . '" aria-checked="' . $on($checked) . '"' . $dis . '><span class="rdot"></span><span' . de($de) . '>' . h($en) . '</span></button>';
 };
+/* Ort des Geraets mit Suchfeld, bei Uhr und Wetter. Ein Punkt je Geraet, derselbe wie auf der
+   Karte beim Flugradar. Gesucht wird ueber /api/geo nur auf Absenden, wie dort (Nominatim).
+   $p macht die ids eindeutig. */
+$placeCard = static function (string $p) use ($s, $cardLabel, $mono, $dis): string {
+    return '<article style="background:#0B0D0F;padding:22px">'
+        . '<p style="' . $cardLabel . '"' . de('Ort') . '>Location</p>'
+        . '<p data-out="place" style="margin:0 0 6px;font-size:15px;color:#E8EAEC">' . h((string) $s['location']['place']) . '</p>'
+        . '<p data-out="coords" style="margin:0 0 16px;' . $mono . 'font-size:11px;color:#8B949C"></p>'
+        . '<form data-place-form novalidate style="margin:0">'
+        . '<label for="' . h($p) . '-place" style="display:block;margin-bottom:8px;' . $mono . 'font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#B4BCC3"' . de('Ort oder Adresse suchen') . '>Find a place or address</label>'
+        . '<div style="display:flex;gap:6px">'
+        . '<input id="' . h($p) . '-place" data-place-q type="search" enterkeyhint="search" maxlength="120" autocomplete="off" placeholder="Esch-sur-Alzette" class="field" style="flex:1;min-width:0"' . $dis . '>'
+        . '<button type="submit" class="btn-ghost" style="flex:none;color:#FFAA00"' . $dis . de('Suchen') . '>Find</button>'
+        . '</div></form>'
+        . '<p data-place-status role="status" aria-live="polite" style="margin:10px 0 0;font-size:12.5px;line-height:1.5;color:#8B949C"' . de('Weltweit. Gilt für das ganze Gerät, auch für den Flugradar, Übernehmen bringt ihn aufs Panel. Im Ausland auch die Zeitzone bei der Uhr umstellen.') . '>Anywhere in the world. Applies to the whole device, the flight radar too, and Apply puts it on the panel. Abroad, also change the time zone under clock.</p>'
+        . '</article>';
+};
 ?>
 <div style="min-height:100vh;display:flex;flex-direction:column">
 
@@ -389,6 +406,8 @@ $row = static function (string $key, string $value, bool $checked, string $en, s
           <p style="<?= $note ?>"<?= de('Die Echtzeituhr auf dem Board hält die Zeit auch ohne WLAN. Sommerzeit macht die Zeitzone selbst.') ?>>The real-time clock on the board keeps time without Wi-Fi. The zone handles daylight saving itself.</p>
         </article>
 
+        <?= $placeCard('c') ?>
+
         <article style="background:#0B0D0F;padding:22px">
           <p id="c-wx-label" style="<?= $cardLabel ?>"<?= de('Wetterstreifen') ?>>Weather strip</p>
           <?= $sw('clock.wx', (bool) $s['clock']['wx'], 'c-wx-label', 'Show under the clock', 'Unter der Uhr anzeigen', 'Twelve pixels tall: temperature and one word like CLEAR.', 'Zwölf Pixel hoch: Temperatur und ein Wort wie SONNIG.') ?>
@@ -424,12 +443,7 @@ $row = static function (string $key, string $value, bool $checked, string $en, s
       </div>
 
       <div data-panel-for="weather" style="<?= $grid ?>"<?= $s['mode'] === 'weather' ? '' : ' hidden' ?>>
-        <article style="background:#0B0D0F;padding:22px">
-          <p style="<?= $cardLabel ?>"<?= de('Ort') ?>>Location</p>
-          <p data-out="place" style="margin:0 0 6px;font-size:15px;color:#E8EAEC"><?= h($s['location']['place']) ?></p>
-          <p data-out="coords" style="margin:0 0 14px;<?= $mono ?>font-size:11px;color:#8B949C"></p>
-          <p style="margin:0;font-size:12.5px;line-height:1.55;color:#8B949C"<?= de('Derselbe Punkt wie beim Flugradar. Auf der Karte dort verschieben.') ?>>The same point as the flight radar. Move it on the map there.</p>
-        </article>
+        <?= $placeCard('w') ?>
 
         <article style="background:#0B0D0F;padding:22px">
           <p id="w-unit-label" style="<?= $cardLabel ?>"<?= de('Einheit') ?>>Unit</p>
@@ -482,7 +496,7 @@ $row = static function (string $key, string $value, bool $checked, string $en, s
 
           <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding-top:18px;border-top:1px solid #1B2126">
             <button type="button" data-t-find class="btn-ghost" style="color:#FFAA00"<?= $dis ?>></button>
-            <p data-t-find-status role="status" aria-live="polite" style="margin:0;flex:1;min-width:200px;font-size:12.5px;line-height:1.5;color:#8B949C"<?= de('Im Umkreis von einem Kilometer um den Standort des Geräts. Den Standort verschiebst du auf der Karte beim Flugradar.') ?>>Within a kilometre of the device location. You move the location on the map of the flight radar.</p>
+            <p data-t-find-status role="status" aria-live="polite" style="margin:0;flex:1;min-width:200px;font-size:12.5px;line-height:1.5;color:#8B949C"<?= de('Im Umkreis von einem Kilometer um den Standort des Geräts. Den Standort setzt du bei Uhr oder Wetter, oder auf der Karte beim Flugradar.') ?>>Within a kilometre of the device location. You set the location under clock or weather, or on the map of the flight radar.</p>
           </div>
           <div data-t-near hidden style="display:flex;flex-direction:column;gap:1px;background:#1B2126;border:1px solid #1B2126;border-radius:2px;margin-top:14px"></div>
 

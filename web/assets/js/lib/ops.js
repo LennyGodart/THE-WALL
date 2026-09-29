@@ -302,10 +302,11 @@
           var txt = clockText(op, ctx.now, ctx.iana);
           var cz = zoom(op);
           if (op.seg) {
-            /* Geisterrahmen nur hinter Ziffern. */
+            /* Geisterrahmen nur hinter Ziffern, in der Farbe aus g (ab Firmware 0.2.2), sonst Bernstein. */
+            var ghost = op.g ? colour(op.g) : '#2A2000';
             for (var i = 0; i < txt.length; i++) {
               if (txt[i] < '0' || txt[i] > '9') continue;
-              P.frame(g, op.x + i * 6 * cz, op.y, 5 * cz, 7 * cz, '#2A2000');
+              P.frame(g, op.x + i * 6 * cz, op.y, 5 * cz, 7 * cz, ghost);
             }
           }
           /* Ohne Sekunden blinkt der Doppelpunkt im Sekundentakt, wie in live.cpp. */

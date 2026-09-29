@@ -338,10 +338,29 @@ function op_logo(string $code, int $x = 2, int $y = 2): array
 function op_clock(int $x, int $y, int $z, string $c, bool $h24, bool $sec, bool $seg, bool $ap = false): array
 {
     $op = ['t' => 'clock', 'x' => $x, 'y' => $y, 'z' => $z, 'c' => $c, 'h24' => $h24, 'sec' => $sec, 'seg' => $seg];
+    if ($seg) {
+        $op['g'] = clock_ghost($c);
+    }
     if ($ap && !$h24 && $z > 1) {
         $op['ap'] = true;
     }
     return $op;
+}
+
+/**
+ * Farbe der Geisterrahmen im Segment-Gesicht: die Uhrfarbe mit einem Sechstel der
+ * Helligkeit, so wie das dunkle Bernstein zur Uhr in FFAA00 passt. Bis Firmware 0.2.1
+ * waren die Rahmen fest 2A2000 und standen so auch hinter einer blauen Uhr (Wunsch des
+ * Projektinhabers vom 29. September 2026). Aeltere Firmware uebergeht das Feld g.
+ * Dieselbe Rechnung steht in ops.js und device.js (ghostOf).
+ */
+function clock_ghost(string $c): string
+{
+    $out = '';
+    foreach (str_split(hex6($c), 2) as $h) {
+        $out .= sprintf('%02X', (int) round(hexdec($h) / 6));
+    }
+    return $out;
 }
 
 function op_date(int $y, string $c, string $lang): array

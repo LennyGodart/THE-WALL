@@ -2,7 +2,7 @@
 #pragma once
 #include <Arduino.h>
 
-#define FW_VERSION "0.2.1"
+#define FW_VERSION "0.2.2"
 // Marke fuer das Hochladen im Admin-Bereich: der Server liest die Version aus der
 // Datei selbst ("THEWALL-FW 0.1.7"), statt dem Dateinamen zu glauben.
 #define FW_MARKER "THEWALL-FW " FW_VERSION

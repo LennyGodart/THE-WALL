@@ -184,6 +184,19 @@
     TW.brightBar($('[data-bar]'), draft.bright);
   }
 
+  /* Geisterrahmen der Segment-Uhr: die Uhrfarbe mit einem Sechstel der Helligkeit, wie
+     clock_ghost() auf dem Server. */
+  function ghostOf(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || ''));
+    if (!m) return '#2A2000';
+    var out = '#';
+    for (var i = 0; i < 6; i += 2) {
+      var v = Math.round(parseInt(m[1].substr(i, 2), 16) / 6);
+      out += (v < 16 ? '0' : '') + v.toString(16);
+    }
+    return out.toUpperCase();
+  }
+
   function drawFaces() {
     var txt = '20:14', px = 2, gap = 1;
     [['small', 1], ['big', 2], ['seg', 2]].forEach(function (d) {
@@ -198,9 +211,10 @@
       var x = Math.max(0, Math.round((cols - P.width(txt, scale)) / 2));
       var y = Math.max(0, Math.round((rows - 7 * scale) / 2));
       if (d[0] === 'seg') {
+        var ghost = ghostOf(draft.clock.color);
         for (var i = 0; i < txt.length; i++) {
           if (txt[i] === ':') continue;
-          P.frame(g, x + i * 6 * scale, y, 5 * scale, 7 * scale, '#2A2000');
+          P.frame(g, x + i * 6 * scale, y, 5 * scale, 7 * scale, ghost);
         }
       }
       P.text(g, x, y, txt, draft.clock.color, scale);
@@ -1286,6 +1300,50 @@
   var radiusInput = $('#f-radius');
   if (radiusInput) radiusInput.addEventListener('input', function () {
     if (mapFrame && mapReady) mapFrame.contentWindow.postMessage({ type: 'radius', nm: draft.flight.radius }, location.origin);
+  });
+
+  /* ---------- Ort suchen, bei Uhr und Wetter ----------
+     Wie die Karte beim Flugradar: /api/geo nur auf Absenden, ein Treffer. Der Ort gilt fuer das
+     ganze Geraet, die Karte folgt ihm, aufs Panel kommt er wie alles andere mit Uebernehmen. */
+  $$('[data-place-form]').forEach(function (form) {
+    var q = form.querySelector('[data-place-q]');
+    var btn = form.querySelector('button[type="submit"]');
+    var status = form.parentNode.querySelector('[data-place-status]');
+    var busy = false;
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      if (busy || q.disabled) return;
+      var term = q.value.trim();
+      if (!term) {
+        TW.text(status, 'Type a place or an address first.', 'Zuerst einen Ort oder eine Adresse eingeben.');
+        q.focus();
+        return;
+      }
+      busy = true;
+      btn.disabled = true;
+      TW.text(status, 'Searching...', 'Suche läuft...');
+      TW.api('/api/geo', { q: term, lang: TW.lang() }).then(function (res) {
+        var d = res.data || {};
+        if (res.ok && d.status === 'ok' && typeof d.lat === 'number' && typeof d.lon === 'number') {
+          draft.location = { lat: d.lat, lon: d.lon, place: String(d.name || term).slice(0, 60) };
+          q.value = '';
+          changed('location');
+          pushMap();
+          TW.text(status, 'Found: ' + draft.location.place + '. Apply puts it on the panel.', 'Gefunden: ' + draft.location.place + '. Übernehmen bringt ihn aufs Panel.');
+        } else if (res.ok && d.status === 'none') {
+          TW.text(status, 'Nothing found for "' + term + '".', 'Nichts gefunden für "' + term + '".');
+          q.focus();
+        } else if (res.status === 429) {
+          var e = TW.errorText(res);
+          TW.text(status, e[0], e[1]);
+        } else {
+          TW.text(status, 'The search is not reachable right now. Try again in a minute.', 'Die Suche ist gerade nicht erreichbar. In einer Minute nochmal versuchen.');
+        }
+      }).then(function () {
+        busy = false;
+        btn.disabled = false;
+      });
+    });
   });
 
   /* ---------- Geraeteumschalter ---------- */
