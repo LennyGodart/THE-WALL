@@ -26,6 +26,8 @@ You need:
 - Node 18 or newer for the tools
 - PlatformIO only for firmware work, Python 3.14 only for the Home Assistant integration
 
+**On Windows** take the zip "VS17 x64 Non Thread Safe" from [windows.php.net](https://windows.php.net/download/), unpack it, copy `php.ini-development` to `php.ini` and remove the semicolon in front of `extension_dir = "ext"` and the lines `extension=curl`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_sqlite` and `sodium`. PHP on Windows has no list of certificate authorities, so outside requests fail until `curl.cainfo` and `openssl.cafile` point to one, for example `cacert.pem` from [curl.se](https://curl.se/docs/caextract.html). Git Bash, which comes with Git for Windows, runs the commands below. If `php` is not the right version, tell the start script which one to use: `PHP_BIN=/c/path/to/php.exe bash tools/dev-server.sh`.
+
 ### Server and website
 
 ```
@@ -51,7 +53,7 @@ Without SMTP every new account is confirmed right away, mails are not sent.
   node tools/panel-png.mjs frame.json out.png
   ```
 
-  The first request creates the device. It shows a greeting until you press "Apply" on its device page once. At most one frame per second per device.
+  The first request creates the device. It shows a greeting until you press "Apply" on its device page once. At most one frame per second per device. The first time you open the device page of a device that has checked in, a short introduction opens; "Later" closes it. A new device alternates between flight radar and clock every 30 seconds (rotation). To see only the mode you picked, remove the other modes from the rotation on the device page.
 
 ### External services
 
@@ -59,7 +61,7 @@ Without SMTP every new account is confirmed right away, mails are not sent.
 | --- | --- |
 | adsb.lol, adsbdb, Open-Meteo, Nominatim | need internet, no key. The local server identifies itself as a development build with the address of this repository |
 | Public transport (mobiliteit.lu) | needs a free personal key, see [`docs/server/betrieb.md`](docs/server/betrieb.md). Without it the panel shows NO KEY |
-| Spotify | a stand-in: `php -d extension=gd -S 127.0.0.1:8766 tools/spotify-mock.php`, then start the server with `TW_SPOTIFY_MOCK=http://127.0.0.1:8766`, enter any 32 hex characters as client ID and secret in the admin area and connect on the device page. `/control?mode=pause`, `skip=1`, `delay=1200`, `early=1500` steer it |
+| Spotify | a stand-in: `php -S 127.0.0.1:8766 tools/spotify-mock.php` (needs gd), then start the server with `TW_SPOTIFY_MOCK=http://127.0.0.1:8766`, enter any 32 hex characters as client ID and secret in the admin area and connect on the device page. `/control?mode=pause`, `skip=1`, `delay=1200`, `early=1500` steer it |
 | Mail | needs your own SMTP account, otherwise nothing is sent |
 | Airline logos | not in this repository, they are trademarks. Without them the panel shows a grey block with the code. `node tools/logos-build.mjs` builds them for your own server |
 

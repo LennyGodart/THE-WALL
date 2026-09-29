@@ -26,6 +26,8 @@ Nötig sind:
 - Node 18 oder neuer für die Werkzeuge
 - PlatformIO nur für die Firmware, Python 3.14 nur für die Integration in Home Assistant
 
+**Unter Windows** das Zip "VS17 x64 Non Thread Safe" von [windows.php.net](https://windows.php.net/download/) nehmen, entpacken, `php.ini-development` nach `php.ini` kopieren und das Semikolon vor `extension_dir = "ext"` und vor den Zeilen `extension=curl`, `gd`, `intl`, `mbstring`, `openssl`, `pdo_sqlite` und `sodium` entfernen. PHP unter Windows kennt keine Zertifizierungsstellen, Abrufe nach außen scheitern deshalb, bis `curl.cainfo` und `openssl.cafile` auf eine Liste zeigen, etwa `cacert.pem` von [curl.se](https://curl.se/docs/caextract.html). Die Befehle unten laufen in Git Bash, das mit Git für Windows kommt. Ist `php` nicht die richtige Version, sagt man dem Startskript, welche: `PHP_BIN=/c/pfad/zu/php.exe bash tools/dev-server.sh`.
+
 ### Server und Webseite
 
 ```
@@ -51,7 +53,7 @@ Ohne SMTP ist jedes neue Konto sofort bestätigt, Mails gehen keine raus.
   node tools/panel-png.mjs frame.json out.png
   ```
 
-  Der erste Abruf legt das Gerät an. Es zeigt eine Begrüßung, bis auf seiner Geräteseite einmal "Übernehmen" gedrückt wurde. Höchstens ein Frame pro Sekunde und Gerät.
+  Der erste Abruf legt das Gerät an. Es zeigt eine Begrüßung, bis auf seiner Geräteseite einmal "Übernehmen" gedrückt wurde. Höchstens ein Frame pro Sekunde und Gerät. Beim ersten Öffnen der Geräteseite eines Geräts, das sich gemeldet hat, erscheint eine kurze Einführung, "Später" schließt sie. Ein neues Gerät wechselt alle 30 Sekunden zwischen Flugradar und Uhr (Rotation). Wer nur den gewählten Modus sehen will, nimmt die anderen auf der Geräteseite aus der Rotation.
 
 ### Dienste von außen
 
@@ -59,7 +61,7 @@ Ohne SMTP ist jedes neue Konto sofort bestätigt, Mails gehen keine raus.
 | --- | --- |
 | adsb.lol, adsbdb, Open-Meteo, Nominatim | brauchen Internet, keinen Schlüssel. Der lokale Server gibt sich als Entwicklungsstand mit der Adresse dieses Repos aus |
 | Nahverkehr (mobiliteit.lu) | braucht einen kostenlosen persönlichen Schlüssel, siehe [`docs/server/betrieb.md`](docs/server/betrieb.md). Ohne ihn zeigt das Panel KEIN SCHLUESSEL |
-| Spotify | eine Nachbildung: `php -d extension=gd -S 127.0.0.1:8766 tools/spotify-mock.php`, dann den Server mit `TW_SPOTIFY_MOCK=http://127.0.0.1:8766` starten, im Admin-Bereich beliebige 32 Hex-Zeichen als Client-ID und Secret eintragen und auf der Geräteseite verbinden. `/control?mode=pause`, `skip=1`, `delay=1200`, `early=1500` steuern sie |
+| Spotify | eine Nachbildung: `php -S 127.0.0.1:8766 tools/spotify-mock.php` (braucht gd), dann den Server mit `TW_SPOTIFY_MOCK=http://127.0.0.1:8766` starten, im Admin-Bereich beliebige 32 Hex-Zeichen als Client-ID und Secret eintragen und auf der Geräteseite verbinden. `/control?mode=pause`, `skip=1`, `delay=1200`, `early=1500` steuern sie |
 | Mail | braucht einen eigenen SMTP-Zugang, sonst geht nichts raus |
 | Airline-Logos | nicht in diesem Repo, sie sind Marken. Ohne sie zeigt das Panel einen grauen Block mit dem Kürzel. `node tools/logos-build.mjs` baut sie für den eigenen Server |
 
