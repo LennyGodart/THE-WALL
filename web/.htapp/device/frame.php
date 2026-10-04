@@ -28,7 +28,6 @@ declare(strict_types=1);
 
 const FRAME_TTL = 10;
 const FRAME_WINDOW = 25;
-const ROTATION_SLOT = 30;
 const NOTE_FRONT_SECONDS = 600;
 
 const C_ACCENT = 'FFAA00';
@@ -149,6 +148,15 @@ function frame_mode_list(array $settings, array $ctx, bool $preview): array
 }
 
 /**
+ * Sekunden je Modus in der Rotation (`cycle`), auf die erlaubte Spanne begrenzt. Die Plaetze
+ * zaehlen ab 1970, wie die Seiten: zwei Abrufe kommen so auf dieselben Grenzen.
+ */
+function frame_cycle(array $settings): int
+{
+    return clamp_int($settings['cycle'] ?? null, ROTATION_CYCLES[0], ROTATION_CYCLES[count(ROTATION_CYCLES) - 1], ROTATION_CYCLE);
+}
+
+/**
  * Die Seiten der Modi zwischen $from und $to, bei einem laufenden Timer mit der Ecke. Die
  * Modi erfahren ueber $ctx['corner'], dass ein Timer laeuft, und machen Platz; ohne Timer
  * bleibt alles wie vorher.
@@ -162,7 +170,7 @@ function frame_normal_pages(array $ctx, float $from, float $to): array
     if (count($list) === 1) {
         $pages = frame_mode_pages($list[0], $ctx, $from, $to);
     } else {
-        foreach (frame_slots($from, $to, ROTATION_SLOT) as [$index, $start, $end]) {
+        foreach (frame_slots($from, $to, frame_cycle($ctx['settings'])) as [$index, $start, $end]) {
             $modeId = $list[$index % count($list)];
             $slotPages = frame_mode_pages($modeId, $ctx, max($from, $start), min($to, $end));
             if ($slotPages && abs($slotPages[0]['from'] - (int) round($start * 1000)) < 5) {

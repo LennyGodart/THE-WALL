@@ -44,6 +44,25 @@
     transit: ['Preview: departures', 'Vorschau: Nahverkehr'], spotify: ['Preview: Spotify', 'Vorschau: Spotify'], notes: ['Preview: notes', 'Vorschau: Notizen'], pixel: ['Preview: pixel editor', 'Vorschau: Pixel-Editor']
   };
   var ROT = { flight: ['Flight', 'Flug'], clock: ['Clock', 'Uhr'], weather: ['Weather', 'Wetter'], transit: ['Departures', 'Nahverkehr'], spotify: ['Spotify', 'Spotify'] };
+  /* Takt der Rotation: der Regler steht auf einer Stufe aus ROTATION_CYCLES, im Entwurf stehen
+     Sekunden. Liegt ein Wert zwischen zwei Stufen, steht der Regler auf der naechsten, und die
+     Zahl daneben nennt trotzdem den echten Wert. */
+  var CYCLES = Array.isArray(D.cycles) && D.cycles.length ? D.cycles : [10, 15, 20, 30, 45, 60, 90, 120, 180, 300, 600];
+  function cycleStop(sec) {
+    var best = 0;
+    CYCLES.forEach(function (c, i) { if (Math.abs(c - sec) < Math.abs(CYCLES[best] - sec)) best = i; });
+    return best;
+  }
+  function inMinutes(sec) { return sec >= 120 && sec % 60 === 0; }
+  function cycleShort(sec) { return inMinutes(sec) ? (sec / 60) + ' MIN' : sec + ' S'; }
+  function cycleWords(sec) {
+    return inMinutes(sec) ? [(sec / 60) + ' minutes', (sec / 60) + ' Minuten'] : [sec + ' seconds', sec + ' Sekunden'];
+  }
+  function duration(sec) {
+    if (sec < 120) return sec + ' s';
+    var m = Math.floor(sec / 60), r = sec % 60;
+    return m + ' min' + (r ? ' ' + r + ' s' : '');
+  }
 
   function get(path) {
     return path.split('.').reduce(function (o, k) { return o == null ? undefined : o[k]; }, draft);
@@ -141,9 +160,19 @@
     viewsSummary();
     var rot = draft.rotation;
     var names = rot.map(function (k) { return ROT[k] || [k, k]; });
+    var cyc = Number(draft.cycle) || 30;
+    var rotRound = duration(cyc * rot.length);
     TW.text($('[data-rot-summary]'),
-      rot.length < 2 ? 'One mode, no cycling.' : 'Cycles through ' + names.map(function (n) { return n[0]; }).join(', ') + '.',
-      rot.length < 2 ? 'Ein Modus, kein Wechsel.' : 'Wechselt zwischen ' + names.map(function (n) { return n[1]; }).join(', ') + '.');
+      rot.length < 2 ? 'One mode, no cycling.' : 'Cycles through ' + names.map(function (n) { return n[0]; }).join(', ') + '. One round takes ' + rotRound + '.',
+      rot.length < 2 ? 'Ein Modus, kein Wechsel.' : 'Wechselt zwischen ' + names.map(function (n) { return n[1]; }).join(', ') + '. Eine Runde dauert ' + rotRound + '.');
+    var cycIn = $('[data-cycle]');
+    if (cycIn) {
+      var cycStop = String(cycleStop(cyc));
+      if (cycIn.value !== cycStop) cycIn.value = cycStop;
+      var cycWords = cycleWords(cyc);
+      cycIn.setAttribute('aria-valuetext', TW.t(cycWords[0], cycWords[1]));
+    }
+    $$('[data-out="cycle"]').forEach(function (o) { o.textContent = cycleShort(cyc); });
 
     ['line1', 'line2'].forEach(function (k) {
       var left = 21 - String(draft.notes[k]).length;
@@ -264,6 +293,16 @@
       changed('rotation');
     });
   });
+
+  var cycleInput = $('[data-cycle]');
+  if (cycleInput) {
+    cycleInput.addEventListener('input', function () {
+      var c = CYCLES[parseInt(cycleInput.value, 10)];
+      if (cycleInput.disabled || !c) return;
+      draft.cycle = c;
+      changed('cycle');
+    });
+  }
 
   /* ---------- Ansichten waehlen ----------
      Vier Vorschauen nebeneinander, jede rechnet der Server mit genau dieser einen Ansicht

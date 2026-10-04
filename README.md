@@ -31,7 +31,7 @@ The device itself stays simple. Every ten seconds it asks the server what to dra
 | --- | --- |
 | Server and website | Running since September 2026 at [thewall.godart.lu](https://thewall.godart.lu), code in [`web/`](web) |
 | Device interface | Documented and tested in [`docs/server/geraet.md`](docs/server/geraet.md), the firmware is built against it |
-| Firmware | Runs on the board since 14 September 2026: boot and status animations, setup network with its own page, polling the server, the onboard clock chip. Since version 0.1.2 every update has arrived over the air. Both devices run 0.2.1 since 26 September 2026, which adds sound for timers and the alarm; the sound has not been heard on a device yet. Details in [`firmware/`](firmware) |
+| Firmware | Runs on the board since 14 September 2026: boot and status animations, setup network with its own page, polling the server, the onboard clock chip. Since version 0.1.2 every update has arrived over the air. Both devices run 0.2.2, which draws the segment clock in the clock's own colour. 0.2.1 from 26 September 2026 added sound for timers and the alarm; the sound has not been heard on a device yet. Details in [`firmware/`](firmware) |
 | Stand | Designed in OpenSCAD and printed once. After the first fit the slot is 1 mm wider and the front lip covers 1.5 mm instead of 14. The board sits landscape on four printed snap-fit pins on the right foot, no screws |
 
 The instance at thewall.godart.lu runs two devices and takes new accounts by invitation only. To build your own wall, host the server yourself, it takes one PHP host and a database.
@@ -67,7 +67,7 @@ The instance at thewall.godart.lu runs two devices and takes new accounts by inv
 
 **Timers and alarm.** Timers are started on the website or from Home Assistant, up to five at once. While one runs, every mode shows the time left in a corner, top right in most modes; the flight mode then cuts line 1 to nine characters and gives the full name back once the timer is gone. When it runs out, the whole panel says so until someone stops it, at most 15 minutes. One alarm per device with time and weekdays, in the device's time zone. From firmware 0.2.1 the device beeps through the speaker, rings the alarm without internet and stops on a press of the wheel.
 
-**Rotation.** Flight, clock, weather, departures and Spotify in 30-second turns; Spotify only while music plays. Brightness is set on the website and can drop to 35 percent of that value between sunset and sunrise. A switch on the device page reduces motion on the panel: no sliding, no blinking, text stands still.
+**Rotation.** Flight, clock, weather, departures and Spotify take turns, each for 10 seconds to 10 minutes, 30 seconds unless set otherwise; Spotify only while music plays. Brightness is set on the website and can drop to 35 percent of that value between sunset and sunrise. A switch on the device page reduces motion on the panel: no sliding, no blinking, text stands still.
 
 The panel pictures in this README are rendered by [`tools/panel-png.mjs`](tools/panel-png.mjs) from the same drawing commands the device receives. The flight pictures show the demo flight from the start page, the place under it is a real answer from OpenStreetMap. Airline logos are not part of this repository, so these pictures show a coloured block with the ICAO code instead.
 

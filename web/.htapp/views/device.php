@@ -152,7 +152,22 @@ $placeCard = static function (string $p) use ($s, $cardLabel, $mono, $dis): stri
             <button type="button" class="chip" data-rotation="<?= $rid ?>" aria-pressed="<?= $on(in_array($rid, $s['rotation'], true)) ?>"<?= de($rde) ?><?= $dis ?>><?= $ren ?></button>
           <?php endforeach; ?>
         </div>
-        <p data-rot-summary style="margin:10px 0 0;<?= $mono ?>font-size:11px;line-height:1.5;color:#8B949C"></p>
+        <?php /* Takt der Rotation. Der Regler rastet an ROTATION_CYCLES ein, sein Wert ist die
+                 Stufe, nicht die Sekunden: zehn Sekunden bis zehn Minuten linear waeren auf
+                 dieser schmalen Spalte drei Pixel je Schritt. device.js rechnet um. */
+              $cyc = frame_cycle($s);
+              $cycStop = 0;
+              foreach (ROTATION_CYCLES as $i => $c) {
+                  if (abs($c - $cyc) < abs(ROTATION_CYCLES[$cycStop] - $cyc)) {
+                      $cycStop = $i;
+                  }
+              } ?>
+        <label for="d-cycle" style="display:block;margin:16px 0 0;<?= $mono ?>font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#B4BCC3"<?= de('Modus wechseln alle') ?>>Change mode every</label>
+        <div style="display:flex;align-items:center;gap:12px">
+          <input id="d-cycle" data-cycle type="range" min="0" max="<?= count(ROTATION_CYCLES) - 1 ?>" step="1" value="<?= $cycStop ?>" aria-valuetext="<?= $cyc ?> seconds" style="flex:1;min-width:0"<?= $dis ?>>
+          <output for="d-cycle" data-out="cycle" style="<?= $mono ?>font-size:14px;font-weight:600;color:#FFAA00;font-variant-numeric:tabular-nums;flex:0 0 auto;min-width:6ch;text-align:right"><?= $cyc < 120 || $cyc % 60 !== 0 ? $cyc . ' S' : intdiv($cyc, 60) . ' MIN' ?></output>
+        </div>
+        <p data-rot-summary style="margin:4px 0 0;<?= $mono ?>font-size:11px;line-height:1.5;color:#8B949C"></p>
 
         <p id="d-reduce-label" style="margin:22px 0 12px;<?= $mono ?>font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:#8B949C"<?= de('Bewegung') ?>>Motion</p>
         <?= $sw('reduce', !empty($s['reduce']), 'd-reduce-label', 'Reduce motion', 'Bewegung reduzieren', 'No sliding between modes, no blinking, notes stand still. Animations stop at their last frame.', 'Kein Schieben zwischen den Modi, kein Blinken, Laufschrift steht. Animationen bleiben im letzten Bild stehen.') ?>

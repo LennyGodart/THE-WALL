@@ -15,12 +15,19 @@ const DEVICE_ONLINE_SECONDS = 60;
 const DEVICE_MAX_PER_ACCOUNT = 20;
 /* So lange merkt sich der Server ein entferntes Geraet, damit es beim naechsten Abruf 410 bekommt. */
 const DEVICE_REMOVED_DAYS = 30;
+/* Sekunden je Modus in der Rotation. Bis zum 4. Oktober 2026 fest 30, seitdem einstellbar.
+   Der Regler auf der Geraeteseite rastet an diesen Stufen ein, der Server nimmt jede ganze
+   Zahl zwischen der kleinsten und der groessten. Bei 10 Sekunden ist das Panel mit 1,6
+   Sekunden Schub zwischen den Modi schon ein Sechstel der Zeit in Bewegung. */
+const ROTATION_CYCLE = 30;
+const ROTATION_CYCLES = [10, 15, 20, 30, 45, 60, 90, 120, 180, 300, 600];
 
 function device_defaults(): array
 {
     $s = [
         'mode' => 'flight',
         'rotation' => ['flight', 'clock'],
+        'cycle' => ROTATION_CYCLE,
         'bright' => 168,
         // Bewegung reduzieren: kein Schub zwischen den Modi, kein Blinken, Laufschrift steht.
         'reduce' => false,
@@ -97,6 +104,9 @@ function device_sanitize(array $in, array $current, string $role): array
             }
         }
         $out['rotation'] = $rot;
+    }
+    if (array_key_exists('cycle', $in)) {
+        $out['cycle'] = clamp_int($in['cycle'], ROTATION_CYCLES[0], ROTATION_CYCLES[count(ROTATION_CYCLES) - 1], (int) ($current['cycle'] ?? ROTATION_CYCLE));
     }
     if (array_key_exists('bright', $in)) {
         $out['bright'] = clamp_int($in['bright'], 0, 255, (int) $current['bright']);
@@ -259,17 +269,18 @@ function device_rev_value(array $device, ?array $settings = null, int $ownerId =
 
 /**
  * Zeitpunkt der Notiz nach "Uebernehmen": eine neue Notiz steht ab jetzt zehn Minuten vorn.
- * Wer ohne neue Notiz einen anderen Modus oder eine andere Rotation uebernimmt, will diese
- * sehen, die Notiz verliert ihren Vorrang sofort. Bis zum 26. September 2026 stand sie dann
- * noch bis zu zehn Minuten da, die Vorschau zeigte schon den neuen Modus, und das Panel
- * wirkte festgeklemmt. Liefert [Einstellungen, Notiz geaendert].
+ * Wer ohne neue Notiz einen anderen Modus, eine andere Rotation oder einen anderen Takt der
+ * Rotation uebernimmt, will das sehen, die Notiz verliert ihren Vorrang sofort. Bis zum
+ * 26. September 2026 stand sie dann noch bis zu zehn Minuten da, die Vorschau zeigte schon
+ * den neuen Modus, und das Panel wirkte festgeklemmt. Liefert [Einstellungen, Notiz geaendert].
  */
 function device_note_after_apply(array $clean, array $current, ?int $now = null): array
 {
     $changed = $clean['notes']['line1'] !== $current['notes']['line1'] || $clean['notes']['line2'] !== $current['notes']['line2'];
+    $cycle = (int) ($clean['cycle'] ?? ROTATION_CYCLE) !== (int) ($current['cycle'] ?? ROTATION_CYCLE);
     if ($changed && trim($clean['notes']['line1'] . $clean['notes']['line2']) !== '') {
         $clean['note_at'] = $now ?? time();
-    } elseif (!$changed && ($clean['mode'] !== $current['mode'] || $clean['rotation'] !== $current['rotation'])) {
+    } elseif (!$changed && ($clean['mode'] !== $current['mode'] || $clean['rotation'] !== $current['rotation'] || $cycle)) {
         $clean['note_at'] = 0;
     }
     return [$clean, $changed];

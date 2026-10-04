@@ -95,7 +95,7 @@ Seiten entstehen mit `frame_page(float $from, float $to, array $ops, array $extr
 
 Regeln für die Zeitfenster:
 
-- Die Seiten decken `[$from, $to]` lückenlos ab, die erste beginnt genau bei `$from`. `build` bekommt oft nur einen Teil der 25 Sekunden: in der Rotation 30-Sekunden-Plätze, vor einem Klingeln ein kürzeres Stück.
+- Die Seiten decken `[$from, $to]` lückenlos ab, die erste beginnt genau bei `$from`. `build` bekommt oft nur einen Teil der 25 Sekunden: in der Rotation Plätze von 10 Sekunden bis 10 Minuten (`cycle`, Vorgabe 30), vor einem Klingeln ein kürzeres Stück.
 - Grenzen innerhalb des Fensters hängen an der Uhr, nicht am Abruf: volle Minuten, `floor($from / $n) * $n`. Sonst springt die Anzeige, wenn zwei Antworten aneinanderstoßen.
 - Was sich jede Sekunde ändert, zählt das Gerät selbst (`clock`, `date`, `count`, `prog`, `ticker`). Niemals eine Seite je Sekunde schicken.
 - Eine Ausnahme in `build` wird protokolliert, und das Panel zeigt eine rote Fehlerseite. Warnungen gelten als Fehler.

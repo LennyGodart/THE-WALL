@@ -160,9 +160,9 @@ Geräte, Einstellungen und Rechte. Rollen `owner`, `edit`, `view`. Konstanten: `
 
 Testgeräte (Spalte `test`) legt der Admin für ein Konto an, damit es die Geräteseite ohne Hardware sieht. Sie haben die Geräte-ID `test-` und acht Hex-Zeichen, fragen den Server nie, zählen im Admin-Bereich nicht bei Online, Firmware und Budget und zeigen in Statusleiste und Geräteumschalter "Testgerät". Vorschau, Übernehmen, Freigaben und Einstellungen funktionieren wie bei echten Geräten.
 
-- `device_defaults(): array` Modus flight, Rotation flight und clock, Helligkeit 168, `reduce` (Bewegung reduzieren) aus, `off` (Panel aus) aus, keine `timers`, der Wecker aus (`alarm_defaults()`), `Europe/Luxembourg`, Standort Luxemburg-Stadt, dazu die `defaults` jedes Modus
+- `device_defaults(): array` Modus flight, Rotation flight und clock, `cycle` 30 Sekunden je Modus in der Rotation, Helligkeit 168, `reduce` (Bewegung reduzieren) aus, `off` (Panel aus) aus, keine `timers`, der Wecker aus (`alarm_defaults()`), `Europe/Luxembourg`, Standort Luxemburg-Stadt, dazu die `defaults` jedes Modus
 - `device_settings(array $device): array` gespeicherte Einstellungen über die Vorgaben gelegt
-- `device_sanitize(array $in, array $current, string $role): array` gibt `[Einstellungen, Fehler]`; Notizen darf jede Rolle, bei `view` endet es dort. `off` nur mit Bedienrecht. Timer und Wecker fasst es nie an, die haben eigene Schnittstellen. Ein Standort ohne Namen heißt je nach Sprache des Geräts "Custom point" oder "Eigener Punkt"
+- `device_sanitize(array $in, array $current, string $role): array` gibt `[Einstellungen, Fehler]`; Notizen darf jede Rolle, bei `view` endet es dort. `off` nur mit Bedienrecht. `cycle` jede ganze Zahl von 10 bis 600, sonst bleibt der bisherige Wert. Timer und Wecker fasst es nie an, die haben eigene Schnittstellen. Ein Standort ohne Namen heißt je nach Sprache des Geräts "Custom point" oder "Eigener Punkt"
 - `devices_for_user(int $userId): array` eigene und freigegebene, mit `role`
 - `device_for_user(int $deviceId, int $userId): ?array`
 - `device_online(array $d): bool` Abruf in den letzten 60 Sekunden
@@ -172,7 +172,7 @@ Testgeräte (Spalte `test`) legt der Admin für ein Konto an, damit es die Gerä
 - `device_is_test(array $d): bool`
 - `device_settings_update(int $deviceId, callable $fn): ?array` liest, ändert und schreibt nur, wenn niemand dazwischen geschrieben hat: `settings_rev` dient als Vergleich, sonst von vorn, höchstens fünfmal, ohne Transaktion (CHANGELOG 62). `$fn` bekommt die aktuellen Einstellungen und gibt `[neu, Notiz geändert]` oder `null`. Zählt `settings_rev` und bei neuer Notiz `note_rev` hoch. Seit Home Assistant und Timer schreiben mehrere Stellen dieselbe Zeile; vorher hätte "Übernehmen" einen eben gestellten Timer überschrieben
 - `device_rev_value(array $device, ?array $settings = null, int $ownerId = 0): string` die Revision für `/api/v1/rev` und Home Assistant, mit `ring_rev()` und `spotify_rev()`
-- `device_note_after_apply(array $clean, array $current, ?int $now = null): array` gibt `[Einstellungen, Notiz geändert]`: eine neue Notiz setzt `note_at` auf jetzt; ein anderer Modus oder eine andere Rotation ohne neue Notiz setzt es auf 0, die Notiz verliert ihren Vorrang sofort. Bis zum 26. September 2026 stand sie nach einem Wechsel noch bis zu zehn Minuten vorn, die Vorschau zeigte schon den neuen Modus, und das Panel wirkte festgeklemmt
+- `device_note_after_apply(array $clean, array $current, ?int $now = null): array` gibt `[Einstellungen, Notiz geändert]`: eine neue Notiz setzt `note_at` auf jetzt; ein anderer Modus, eine andere Rotation oder ein anderer `cycle` ohne neue Notiz setzt es auf 0, die Notiz verliert ihren Vorrang sofort. Bis zum 26. September 2026 stand sie nach einem Wechsel noch bis zu zehn Minuten vorn, die Vorschau zeigte schon den neuen Modus, und das Panel wirkte festgeklemmt
 - `device_note_hide(int $deviceId): void` `note_at` auf 0 und `settings_rev` hoch, `applied` bleibt, wie es ist; schreibt nichts, wenn keine Notiz vorn steht
 - `device_uid_valid(string $uid): bool`
 - `device_register_poll(array $owner, string $uid, array $t): array` Gerät anlegen oder finden, Telemetrie speichern; legen zwei erste Abrufe es gleichzeitig an, liest der zweite das Gerät des ersten statt mit 500 zu enden
@@ -190,7 +190,8 @@ Baut die Antwort oben. Dieselbe Funktion liefert die Vorschau im Browser (`POST 
 
 - `frame_build(array $device, array $settings, array $owner, bool $preview = false): array` vom Wichtigsten an: Kopplungscode für Home Assistant, Klingeln, Panel aus, Begrüßung vor dem ersten "Übernehmen", dann die Modi (`frame_normal_pages()`). Beginnt im Fenster ein Klingeln, endet die normale Seite dort und die Seite fürs Klingeln schließt an. Beim Kopplungscode und beim Klingeln mindestens Helligkeit 96 (`RING_BRIGHT_MIN`). Die Vorschau zeigt immer den gewählten Modus, mit der Ecke eines laufenden Timers
 - `frame_mode_list(array $settings, array $ctx, bool $preview): array` welche Modi gerade dran sind: einer oder die Rotation ohne die, die nichts zu zeigen haben, Spotify zuerst, wenn so eingestellt, eine neue Notiz zehn Minuten vorn
-- `frame_normal_pages(array $ctx, float $from, float $to): array` die Seiten der Modi in 30-Sekunden-Schritten, bei einem laufenden Timer mit `$ctx['corner']` und der Ecke auf jeder Seite, die vor seinem Ende beginnt
+- `frame_cycle(array $settings): int` Sekunden je Modus in der Rotation aus `cycle`, begrenzt auf 10 bis 600, ohne Wert 30
+- `frame_normal_pages(array $ctx, float $from, float $to): array` die Seiten der Modi in Plätzen von `frame_cycle()` Sekunden, gezählt ab 1970 wie die Seiten, bei einem laufenden Timer mit `$ctx['corner']` und der Ecke auf jeder Seite, die vor seinem Ende beginnt
 - `note_front_left(array $settings, ?int $now = null): int` Sekunden, die eine neue Notiz noch vor dem gewählten Modus steht, 0 ohne Text oder nach dem Ausblenden (`note_at` 0)
 - `frame_mode_pages(string $modeId, array $ctx, float $from, float $to): array` fängt Fehler eines Modus ab und zeigt "FEHLER"
 - `frame_page(float $from, float $to, array $ops, array $extra = []): array`
@@ -203,7 +204,7 @@ Baut die Antwort oben. Dieselbe Funktion liefert die Vorschau im Browser (`POST 
 - Befehle: `op_text(int|string $x, int $y, string $s, string $c, int $z = 1): array`, `op_ticker(int $x, int $y, string $s, string $c, int $v = 14): array`, `op_rect(int $x, int $y, int $w, int $h, string $c): array`, `op_bar(int $x, int $y, int $w, string $c, int $h = 2): array`, `op_frame(int $x, int $y, int $w, int $h, string $c): array`, `op_logo(string $code, int $x = 2, int $y = 2): array`, `op_clock(int $x, int $y, int $z, string $c, bool $h24, bool $sec, bool $seg, bool $ap = false): array`, `op_date(int $y, string $c, string $lang): array`, `op_anim(string $id, array $params = []): array`. Die Karte baut ihre Befehle in `modes/flight_map.php` und `services/geomap.php`
 - Helfer: `hex6(string $colour): string`, `clock_text_length(bool $h24, bool $sec): int`, `clock_width(bool $h24, bool $sec, int $z): int` (Breite mit kleinem AM oder PM), `local_time(string $tz, ?int $ts = null, bool $h24 = true): string`
 
-Konstanten: `FRAME_TTL` 10, `FRAME_WINDOW` 25, `ROTATION_SLOT` 30, `NOTE_FRONT_SECONDS` 600, Farben `C_ACCENT`, `C_WHITE`, `C_DIM`, `C_CYAN`, `C_GREEN`, `C_RED`, `C_LINE`, `C_TRACK`.
+Konstanten: `FRAME_TTL` 10, `FRAME_WINDOW` 25, `NOTE_FRONT_SECONDS` 600, aus `device/devices.php` `ROTATION_CYCLE` 30 (Vorgabe) und `ROTATION_CYCLES` (die Stufen des Reglers: 10, 15, 20, 30, 45, 60, 90, 120, 180, 300 und 600 Sekunden), Farben `C_ACCENT`, `C_WHITE`, `C_DIM`, `C_CYAN`, `C_GREEN`, `C_RED`, `C_LINE`, `C_TRACK`.
 
 Extern genutzt von: `api/device.php`, `api/web.php`, allen `modes/*.php`, `views/admin.php`
 

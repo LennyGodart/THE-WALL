@@ -53,7 +53,7 @@ Without SMTP every new account is confirmed right away, mails are not sent.
   node tools/panel-png.mjs frame.json out.png
   ```
 
-  The first request creates the device. It shows a greeting until you press "Apply" on its device page once. At most one frame per second per device. The first time you open the device page of a device that has checked in, a short introduction opens; "Later" closes it. A new device alternates between flight radar and clock every 30 seconds (rotation). To see only the mode you picked, remove the other modes from the rotation on the device page.
+  The first request creates the device. It shows a greeting until you press "Apply" on its device page once. At most one frame per second per device. The first time you open the device page of a device that has checked in, a short introduction opens; "Later" closes it. A new device alternates between flight radar and clock every 30 seconds (rotation; the interval is set on the device page under "Rotation"). To see only the mode you picked, remove the other modes from the rotation on the device page.
 
 ### External services
 
@@ -80,7 +80,7 @@ Run from the repository root. The same checks run on every pull request.
 | Command | What it checks |
 | --- | --- |
 | `TW_ENV=dev php tools/auth-fixtures.php` | same-origin rules |
-| `TW_ENV=dev php tools/device-fixtures.php` | notes, apply, rate limits, frame clock |
+| `TW_ENV=dev php tools/device-fixtures.php` | notes, apply, rotation interval, rate limits, frame clock |
 | `TW_ENV=dev php tools/flight-fixtures.php` | flight texts, units, map, routes, logos |
 | `TW_ENV=dev php tools/timer-fixtures.php` | timers, alarm, ringing, timer corner in every mode |
 | `TW_ENV=dev php tools/transit-fixtures.php` | the transit API |

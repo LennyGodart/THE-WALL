@@ -53,7 +53,7 @@ Ohne SMTP ist jedes neue Konto sofort bestätigt, Mails gehen keine raus.
   node tools/panel-png.mjs frame.json out.png
   ```
 
-  Der erste Abruf legt das Gerät an. Es zeigt eine Begrüßung, bis auf seiner Geräteseite einmal "Übernehmen" gedrückt wurde. Höchstens ein Frame pro Sekunde und Gerät. Beim ersten Öffnen der Geräteseite eines Geräts, das sich gemeldet hat, erscheint eine kurze Einführung, "Später" schließt sie. Ein neues Gerät wechselt alle 30 Sekunden zwischen Flugradar und Uhr (Rotation). Wer nur den gewählten Modus sehen will, nimmt die anderen auf der Geräteseite aus der Rotation.
+  Der erste Abruf legt das Gerät an. Es zeigt eine Begrüßung, bis auf seiner Geräteseite einmal "Übernehmen" gedrückt wurde. Höchstens ein Frame pro Sekunde und Gerät. Beim ersten Öffnen der Geräteseite eines Geräts, das sich gemeldet hat, erscheint eine kurze Einführung, "Später" schließt sie. Ein neues Gerät wechselt alle 30 Sekunden zwischen Flugradar und Uhr (Rotation; den Takt stellt man auf der Geräteseite unter "Rotation" ein). Wer nur den gewählten Modus sehen will, nimmt die anderen auf der Geräteseite aus der Rotation.
 
 ### Dienste von außen
 
@@ -80,7 +80,7 @@ Aus dem Hauptverzeichnis starten. Dieselben Prüfungen laufen bei jedem Pull Req
 | Befehl | Was geprüft wird |
 | --- | --- |
 | `TW_ENV=dev php tools/auth-fixtures.php` | Regeln für die Herkunft von Anfragen |
-| `TW_ENV=dev php tools/device-fixtures.php` | Notizen, Übernehmen, Zähler, Uhrzeit im Frame |
+| `TW_ENV=dev php tools/device-fixtures.php` | Notizen, Übernehmen, Takt der Rotation, Zähler, Uhrzeit im Frame |
 | `TW_ENV=dev php tools/flight-fixtures.php` | Flugtexte, Einheiten, Karte, Strecken, Logos |
 | `TW_ENV=dev php tools/timer-fixtures.php` | Timer, Wecker, Klingeln, Timer-Ecke in jedem Modus |
 | `TW_ENV=dev php tools/transit-fixtures.php` | die Schnittstelle des Nahverkehrs |

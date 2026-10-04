@@ -1,6 +1,7 @@
 <?php
 // Prueft Einstellungen und Rahmen eines Geraets ohne Netz: wann eine neue Notiz vor dem
-// gewaehlten Modus steht und wann sie ihren Vorrang verliert (CHANGELOG 61).
+// gewaehlten Modus steht und wann sie ihren Vorrang verliert (CHANGELOG 61), und in welchem
+// Takt die Rotation wechselt (CHANGELOG 71).
 // Aufruf aus dem Hauptverzeichnis:
 //   TW_ENV=dev php tools/device-fixtures.php
 // Exit-Code 1 bei einem Fehler.
@@ -53,6 +54,29 @@ $modus = static fn(array $e): string => (string) (frame_build($geraet, $e, $besi
 check('Rahmen: Uhr gewaehlt, frische Notiz steht vorn', $modus(['mode' => 'clock', 'note_at' => time()] + $s) === 'notes');
 check('Rahmen: nach dem Wechsel die Uhr', $modus(['mode' => 'clock', 'note_at' => 0] + $s) === 'clock');
 check('Rahmen: die Vorschau zeigt immer den gewaehlten Modus', (string) (frame_build($geraet, ['mode' => 'clock', 'note_at' => time()] + $s, $besitzer, true)['pages'][0]['mode'] ?? '') === 'clock');
+
+// Takt der Rotation (cycle): bis zum 4. Oktober 2026 fest 30 Sekunden, seitdem 10 bis 600.
+check('Takt: Vorgabe 30 Sekunden, auch fuer alte Einstellungen ohne cycle', device_defaults()['cycle'] === 30 && frame_cycle([]) === 30 && frame_cycle(['cycle' => null]) === 30);
+$takt = static fn(mixed $wert, array $vorher = [], string $rolle = 'owner'): int => (int) device_sanitize(['cycle' => $wert], $vorher + $s, $rolle)[0]['cycle'];
+check('Takt: unter 10 wird 10, ueber 600 wird 600', $takt(5) === 10 && $takt(3600) === 600);
+check('Takt: 45 bleibt 45, auch als Text, 25 zwischen zwei Stufen ebenso', $takt('45') === 45 && $takt(25) === 25);
+check('Takt: Unsinn laesst den bisherigen Wert', $takt('oft', ['cycle' => 90]) === 90 && $takt(null, ['cycle' => 90]) === 90);
+check('Takt: Gaeste mit Leserecht aendern ihn nicht', $takt(10, [], 'view') === 30);
+[$neu, $geaendert] = device_note_after_apply(['cycle' => 60] + $mitNotiz, $mitNotiz, $t + 30);
+check('Uebernehmen: ein anderer Takt beendet den Vorrang der Notiz', !$geaendert && $neu['note_at'] === 0);
+
+// Der Rahmen wechselt im eingestellten Takt, an der Uhr ausgerichtet. Uhr und Nahverkehr ohne
+// Haltestelle brauchen dafuer kein Netz.
+$wechsel = static function (int $sekunden) use ($geraet, $besitzer, $s): array {
+    $e = ['mode' => 'clock', 'rotation' => ['clock', 'transit'], 'cycle' => $sekunden, 'note_at' => 0] + $s;
+    return array_values(array_filter(frame_build($geraet, $e, $besitzer, false)['pages'], static fn(array $p): bool => isset($p['fx'])));
+};
+$w = $wechsel(10);
+check('Rahmen: bei 10 Sekunden zwei oder drei Wechsel in 26 Sekunden', count($w) >= 2 && count($w) <= 3);
+check('Rahmen: jeder Wechsel auf einer vollen Zehnersekunde', !array_filter($w, static fn(array $p): bool => $p['from'] % 10000 !== 0));
+check('Rahmen: Uhr und Nahverkehr wechseln sich ab, der Nahverkehr faellt ein', count($w) >= 2 && $w[0]['mode'] !== $w[1]['mode'] && in_array('drop', array_column($w, 'fx'), true));
+$w = $wechsel(600);
+check('Rahmen: bei zehn Minuten hoechstens ein Wechsel, auf einer vollen Zehnminute', count($w) <= 1 && !array_filter($w, static fn(array $p): bool => $p['from'] % 600000 !== 0));
 
 // Der Zaehler hinter den Grenzen (core/ratelimit.php), etwa eine Nominatim-Abfrage pro
 // Sekunde fuer den ganzen Server: seit dem 26. September 2026 eine einzige Anweisung.
