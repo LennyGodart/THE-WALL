@@ -53,7 +53,6 @@ function page_device(array $params = []): void
             'settings' => $settings,
             'applied' => !empty($settings['applied']),
             'modes' => $modesMeta,
-            'cycles' => ROTATION_CYCLES,
             'noteRev' => (int) $device['note_rev'],
             'noteLeft' => note_front_left($settings),
             'ring' => ring_status_public($settings),

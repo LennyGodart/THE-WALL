@@ -44,18 +44,21 @@
     transit: ['Preview: departures', 'Vorschau: Nahverkehr'], spotify: ['Preview: Spotify', 'Vorschau: Spotify'], notes: ['Preview: notes', 'Vorschau: Notizen'], pixel: ['Preview: pixel editor', 'Vorschau: Pixel-Editor']
   };
   var ROT = { flight: ['Flight', 'Flug'], clock: ['Clock', 'Uhr'], weather: ['Weather', 'Wetter'], transit: ['Departures', 'Nahverkehr'], spotify: ['Spotify', 'Spotify'] };
-  /* Takt der Rotation: der Regler steht auf einer Stufe aus ROTATION_CYCLES, im Entwurf stehen
-     Sekunden. Liegt ein Wert zwischen zwei Stufen, steht der Regler auf der naechsten, und die
-     Zahl daneben nennt trotzdem den echten Wert. */
-  var CYCLES = Array.isArray(D.cycles) && D.cycles.length ? D.cycles : [10, 15, 20, 30, 45, 60, 90, 120, 180, 300, 600];
-  function cycleStop(sec) {
+  /* Regler mit Stufen fuer Sekunden (data-stops): Takt der Rotation und "Ansicht wechseln
+     alle". Der Regler steht auf einer Stufe, im Entwurf stehen Sekunden. Liegt ein Wert
+     zwischen zwei Stufen, etwa von vor den Stufen, steht der Regler auf der naechsten, und
+     die Zahl daneben nennt trotzdem den echten Wert. */
+  function stopsOf(el) {
+    return String(el.getAttribute('data-stops') || '').split(',').map(Number).filter(function (n) { return n > 0; });
+  }
+  function nearestStop(stops, sec) {
     var best = 0;
-    CYCLES.forEach(function (c, i) { if (Math.abs(c - sec) < Math.abs(CYCLES[best] - sec)) best = i; });
+    stops.forEach(function (c, i) { if (Math.abs(c - sec) < Math.abs(stops[best] - sec)) best = i; });
     return best;
   }
   function inMinutes(sec) { return sec >= 120 && sec % 60 === 0; }
-  function cycleShort(sec) { return inMinutes(sec) ? (sec / 60) + ' MIN' : sec + ' S'; }
-  function cycleWords(sec) {
+  function secShort(sec) { return inMinutes(sec) ? (sec / 60) + ' MIN' : sec + ' S'; }
+  function secWords(sec) {
     return inMinutes(sec) ? [(sec / 60) + ' minutes', (sec / 60) + ' Minuten'] : [sec + ' seconds', sec + ' Sekunden'];
   }
   function duration(sec) {
@@ -118,6 +121,12 @@
         var raw = el.getAttribute('data-value');
         var match = path === 'clock.h24' ? (raw === '1') === !!v : raw === String(v);
         el.setAttribute(el.getAttribute('role') === 'radio' ? 'aria-checked' : 'aria-pressed', match ? 'true' : 'false');
+      } else if (el.hasAttribute('data-stops')) {
+        var sec = Number(v) || stopsOf(el)[0];
+        var at = String(nearestStop(stopsOf(el), sec));
+        if (el.value !== at) el.value = at;
+        var words = secWords(sec);
+        el.setAttribute('aria-valuetext', TW.t(words[0], words[1]));
       } else if (el.type === 'range' || el.tagName === 'SELECT') {
         if (el.value !== String(v)) el.value = String(v);
       } else if (el.type === 'color') {
@@ -140,10 +149,8 @@
     $$('[data-out="bright"]').forEach(function (o) { o.textContent = String(draft.bright); });
     $$('[data-out="radius"]').forEach(function (o) { o.textContent = String(draft.flight.radius); });
     $$('[data-out="dwell"]').forEach(function (o) { o.textContent = String(draft.flight.dwell); });
-    $$('[data-out="view"]').forEach(function (o) { o.textContent = String(draft.flight.view); });
-    var round = 4 * (parseInt(draft.flight.view, 10) || 4);
-    var viewNote = $('[data-view-note]');
-    if (viewNote) TW.text(viewNote, 'Route, departure and arrival, position, metrics: one round takes ' + round + ' s. A new flight starts with the route.', 'Route, Abflug und Ankunft, Position, Messwerte: eine Runde dauert ' + round + ' s. Ein neuer Flug beginnt mit der Route.');
+    $$('[data-out="view"]').forEach(function (o) { o.textContent = secShort(Number(draft.flight.view) || 4); });
+    viewNote();
     $$('[data-out="place"]').forEach(function (o) { o.textContent = draft.location.place; });
     var lat = Number(draft.location.lat), lon = Number(draft.location.lon);
     var coords = Math.abs(lat).toFixed(4) + '°' + (lat >= 0 ? 'N' : 'S') + ' ' + Math.abs(lon).toFixed(4) + '°' + (lon >= 0 ? 'E' : 'W');
@@ -165,14 +172,7 @@
     TW.text($('[data-rot-summary]'),
       rot.length < 2 ? 'One mode, no cycling.' : 'Cycles through ' + names.map(function (n) { return n[0]; }).join(', ') + '. One round takes ' + rotRound + '.',
       rot.length < 2 ? 'Ein Modus, kein Wechsel.' : 'Wechselt zwischen ' + names.map(function (n) { return n[1]; }).join(', ') + '. Eine Runde dauert ' + rotRound + '.');
-    var cycIn = $('[data-cycle]');
-    if (cycIn) {
-      var cycStop = String(cycleStop(cyc));
-      if (cycIn.value !== cycStop) cycIn.value = cycStop;
-      var cycWords = cycleWords(cyc);
-      cycIn.setAttribute('aria-valuetext', TW.t(cycWords[0], cycWords[1]));
-    }
-    $$('[data-out="cycle"]').forEach(function (o) { o.textContent = cycleShort(cyc); });
+    $$('[data-out="cycle"]').forEach(function (o) { o.textContent = secShort(cyc); });
 
     ['line1', 'line2'].forEach(function (k) {
       var left = 21 - String(draft.notes[k]).length;
@@ -275,7 +275,8 @@
     var evt = el.tagName === 'SELECT' ? 'change' : 'input';
     el.addEventListener(evt, function () {
       var v = el.value;
-      if (el.type === 'range') v = parseInt(v, 10) || 0;
+      if (el.hasAttribute('data-stops')) v = stopsOf(el)[parseInt(v, 10)] || stopsOf(el)[0];
+      else if (el.type === 'range') v = parseInt(v, 10) || 0;
       if (path === 'flight.pin') { v = v.toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 12); if (el.value !== v) el.value = v; }
       if (path.indexOf('notes.line') === 0) v = v.slice(0, 21);
       if (el.type === 'color') v = v.toUpperCase();
@@ -294,18 +295,8 @@
     });
   });
 
-  var cycleInput = $('[data-cycle]');
-  if (cycleInput) {
-    cycleInput.addEventListener('input', function () {
-      var c = CYCLES[parseInt(cycleInput.value, 10)];
-      if (cycleInput.disabled || !c) return;
-      draft.cycle = c;
-      changed('cycle');
-    });
-  }
-
   /* ---------- Ansichten waehlen ----------
-     Vier Vorschauen nebeneinander, jede rechnet der Server mit genau dieser einen Ansicht
+     Fuenf Vorschauen nebeneinander, jede rechnet der Server mit genau dieser einen Ansicht
      und den Daten von jetzt. Der Dialog aendert nur den Entwurf, gespeichert wird wie alles
      andere mit "Uebernehmen". Die Seite dahinter bekommt inert, Tab bleibt im Dialog. */
   var VIEW_ORDER = ['route', 'progress', 'position', 'metrics', 'map'];
@@ -322,9 +313,44 @@
     var el = $('[data-views-summary]');
     if (!el) return;
     var on = VIEW_ORDER.filter(function (v) { return views().indexOf(v) !== -1; });
-    if (on.length === VIEW_ORDER.length) TW.text(el, 'All four, one after the other.', 'Alle vier, eine nach der anderen.');
+    if (on.length === VIEW_ORDER.length) TW.text(el, 'All five, one after the other.', 'Alle fünf, eine nach der anderen.');
     else if (on.length === 1) TW.text(el, 'Only ' + VIEW_NAMES[on[0]][0] + ', no change.', 'Nur ' + VIEW_NAMES[on[0]][1] + ', kein Wechsel.');
     else TW.text(el, on.map(function (v) { return VIEW_NAMES[v][0]; }).join(', ') + '.', on.map(function (v) { return VIEW_NAMES[v][1]; }).join(', ') + '.');
+  }
+
+  /* Satz unter "Ansicht wechseln alle": welche Ansichten laufen, wie lange eine Runde dauert
+     (die Karte steht doppelt so lange, FLIGHT_MAP_FACTOR auf dem Server) und ob die Runde in
+     einen Platz der Rotation passt. Seit eine Ansicht bis zu zwei Minuten stehen kann, passt
+     sie oft nicht mehr in die 30 Sekunden, die der Flugradar dort hat. */
+  var VIEW_FIRST = {
+    route: ['the route', 'der Route'], progress: ['departure and arrival', 'Abflug und Ankunft'],
+    position: ['the position', 'der Position'], metrics: ['the metrics', 'den Messwerten'], map: ['the map', 'der Karte']
+  };
+  function viewNote() {
+    var el = $('[data-view-note]');
+    if (!el) return;
+    var sec = Number(draft.flight.view) || 4;
+    var karte = !D.fw || kartenAnsichtMoeglich();
+    var avail = VIEW_ORDER.filter(function (v) { return v !== 'map' || karte; });
+    var on = avail.filter(function (v) { return views().indexOf(v) !== -1; });
+    if (!on.length) on = avail;
+    if (on.length === 1) {
+      TW.text(el, 'One view, it stays until the next flight.', 'Eine Ansicht, sie bleibt bis zum nächsten Flug.');
+      return;
+    }
+    var round = 0;
+    on.forEach(function (v) { round += sec * (v === 'map' ? 2 : 1); });
+    var map = on.indexOf('map') !== -1;
+    var en = on.map(function (v, i) { var n = VIEW_NAMES[v][0]; return i ? n.charAt(0).toLowerCase() + n.slice(1) : n; }).join(', ')
+      + ': one round takes ' + duration(round) + (map ? ', the map stays twice as long' : '') + '. A new flight starts with ' + VIEW_FIRST[on[0]][0] + '.';
+    var de = on.map(function (v) { return VIEW_NAMES[v][1]; }).join(', ')
+      + ': eine Runde dauert ' + duration(round) + (map ? ', die Karte steht doppelt so lange' : '') + '. Ein neuer Flug beginnt mit ' + VIEW_FIRST[on[0]][1] + '.';
+    var cyc = Number(draft.cycle) || 30;
+    if (draft.rotation.length >= 2 && draft.rotation.indexOf('flight') !== -1 && round > cyc) {
+      en += ' In the rotation the flight radar gets ' + duration(cyc) + ' per turn, less than one round.';
+      de += ' In der Rotation hat der Flugradar ' + duration(cyc) + ' je Durchgang, weniger als eine Runde.';
+    }
+    TW.text(el, en, de);
   }
 
   /* Ein Fenster mit grossen Vorschauen. Zweimal benutzt: einmal fuer die Ansichten des

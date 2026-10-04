@@ -159,7 +159,7 @@ Freiwillig, aber schön: der Name in `KNOWN_MODES` und in den Übersetzungen der
 
 1. Standardwert in `defaults` des Modus.
 2. Prüfung in `sanitize`, mit `array_key_exists` und Rückfall auf den alten Wert.
-3. Das Bedienelement in `views/device.php` wie oben, `data-set="<id>.<schlüssel>"`.
+3. Das Bedienelement in `views/device.php` wie oben, `data-set="<id>.<schlüssel>"`. Für Sekunden mit großer Spanne einen Regler mit Stufen über `$secRange(...)` mit einer Liste der Stufen als Konstante: er schickt Sekunden, `device.js` rechnet um und setzt `aria-valuetext`. Vorbilder sind der Takt der Rotation und "Ansicht wechseln alle".
 4. Wirkung in der Funktion, die die Zeichenbefehle baut.
 5. Eine `check()`-Zeile für den neuen Wert und für Unsinn.
 6. Doku in [geraet.md](geraet.md) beim Modus.

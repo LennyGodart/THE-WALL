@@ -72,7 +72,11 @@ mode_register('flight', [
 const FLIGHT_DWELL_MIN = 3;
 const FLIGHT_DWELL_MAX = 60;
 const FLIGHT_VIEW_MIN = 2;
-const FLIGHT_VIEW_MAX = 30;
+const FLIGHT_VIEW_MAX = 120;
+/* Stufen des Reglers "Ansicht wechseln alle". Bis zum 4. Oktober 2026 hoechstens 30 Sekunden
+   in Schritten von einer, seitdem bis zwei Minuten: bis 10 bleibt jede Sekunde waehlbar,
+   darueber wird es groeber. Der Server nimmt jede ganze Zahl von MIN bis MAX. */
+const FLIGHT_VIEW_STOPS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30, 45, 60, 90, 120];
 const FLIGHT_PLAN_TTL = 120;
 /* Die vier Ansichten eines Flugs in ihrer Reihenfolge. Ein neuer Flug beginnt mit der ersten. */
 const FLIGHT_VIEWS = ['route', 'progress', 'position', 'metrics', 'map'];

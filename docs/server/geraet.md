@@ -271,7 +271,7 @@ Jede Datei ruft `mode_register()` auf. Die `build`-Funktionen ruft `frame_mode_p
 
 | Datei | id | Reihenfolge | Rotation | Einstellungen (Vorgabe) |
 | --- | --- | --- | --- | --- |
-| `modes/flight.php` | `flight` | 10 | ja | `radius` 40 NM (5 bis 150, Schritt 5), `alt` Hohe Überflieger ausblenden (aus), `mil` Militär farbig (an), `dwell` Standzeit je Flug 8 s (3 bis 60), `view` Ansicht wechseln alle 4 s (2 bis 30), `views` welche Ansichten laufen (alle fünf, die Karte nur ab Firmware 0.1.9, weltweit), `hold` bei Start und Landung dranbleiben (an), `pin` Einzelflug, `empty` wenn nichts fliegt: `clock`, `wait` oder `off` (clock) |
+| `modes/flight.php` | `flight` | 10 | ja | `radius` 40 NM (5 bis 150, Schritt 5), `alt` Hohe Überflieger ausblenden (aus), `mil` Militär farbig (an), `dwell` Standzeit je Flug 8 s (3 bis 60), `view` Ansicht wechseln alle 4 s (2 bis 120, der Regler rastet an `FLIGHT_VIEW_STOPS` ein, bis 10 jede Sekunde), `views` welche Ansichten laufen (alle fünf, die Karte nur ab Firmware 0.1.9, weltweit), `hold` bei Start und Landung dranbleiben (an), `pin` Einzelflug, `empty` wenn nichts fliegt: `clock`, `wait` oder `off` (clock) |
 | `modes/clock.php` | `clock` | 20 | ja | `face` small, big, seg (big), `color` #FFAA00, `h24` an, `sec` aus, `wx` Wetterleiste an, `night` nachts dimmen an |
 | `modes/weather.php` | `weather` | 30 | ja | `unit` C oder F, `wind` aus, `view` now oder forecast (forecast) |
 | `modes/transit.php` | `transit` | 35 | ja | `stops` bis zu drei Haltestellen `{id, name, short, modes, lines}`, Kurzname höchstens 18 Zeichen, `modes` Zug, Tram, Bus (alle), `hide` ausgeblendete Linien, `rows` 3 bis 5 (4), `walk` Fußweg 0 bis 15 Minuten (0), `fmt` `min` oder `clock` (min), `notes` Meldungen als Laufschrift (an), `school` Schulbusse (aus) |
@@ -281,7 +281,7 @@ Jede Datei ruft `mode_register()` auf. Die `build`-Funktionen ruft `frame_mode_p
 
 ### modes/flight.php (32)
 
-Konstanten: `FLIGHT_DWELL_MIN` 3, `FLIGHT_DWELL_MAX` 60, `FLIGHT_VIEW_MIN` 2, `FLIGHT_VIEW_MAX` 30, `FLIGHT_PLAN_TTL` 120, `FLIGHT_DOTS` `4E5A63`, `FLIGHT_UNITS` (erlaubte Einheiten je Einstellung, die erste ist die Vorgabe).
+Konstanten: `FLIGHT_DWELL_MIN` 3, `FLIGHT_DWELL_MAX` 60, `FLIGHT_VIEW_MIN` 2, `FLIGHT_VIEW_MAX` 120, `FLIGHT_VIEW_STOPS` (2 bis 10, 12, 15, 20, 25, 30, 45, 60, 90, 120), `FLIGHT_PLAN_TTL` 120, `FLIGHT_DOTS` `4E5A63`, `FLIGHT_UNITS` (erlaubte Einheiten je Einstellung, die erste ist die Vorgabe).
 
 Raster aus `CLAUDE.md`: Logo bei (2,2), Zeilen 1 bis 3 bei x 38 mit 15 Zeichen, Zeilen 4 und 5 bei x 2 mit 21 Zeichen, Fortschritt 128×2 bei y 61. Läuft ein Timer, endet Zeile 1 nach neun Zeichen (LUFTHANSA statt LUFTHANSA CITY), rechts daneben steht seine Ecke; ohne Timer wieder fünfzehn.
 

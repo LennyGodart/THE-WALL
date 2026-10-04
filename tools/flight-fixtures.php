@@ -142,6 +142,21 @@ $pages = [];
 flight_view_pages($pages, $ctx, $ac, $route, 1000.0, 1016.0, 1000.0, 'flight:4d0107');
 check('Seiten: Route, Abflug, Position, Messwerte je 4 s', array_column($pages, 'id') === ['flight:4d0107:route', 'flight:4d0107:progress', 'flight:4d0107:position', 'flight:4d0107:metrics'] && $pages[1]['from'] === 1004000);
 
+// Ansicht wechseln alle: seit dem 4. Oktober 2026 bis zu zwei Minuten, vorher hoechstens 30 Sekunden.
+$fsan = mode_get('flight')['sanitize'];
+check('Ansicht: 120 Sekunden erlaubt, mehr wird 120, unter 2 wird 2', $fsan(['view' => 120], $s['flight'])['view'] === 120 && $fsan(['view' => 600], $s['flight'])['view'] === 120 && $fsan(['view' => 1], $s['flight'])['view'] === 2);
+$stufen = FLIGHT_VIEW_STOPS;
+sort($stufen);
+check('Ansicht: die Stufen des Reglers reichen genau von 2 bis 120, aufsteigend und ohne doppelte', $stufen === FLIGHT_VIEW_STOPS && count(array_unique($stufen)) === count($stufen) && $stufen[0] === FLIGHT_VIEW_MIN && $stufen[count($stufen) - 1] === FLIGHT_VIEW_MAX);
+$langsam = $ctx;
+$langsam['settings']['flight']['view'] = 60;
+$pages = [];
+flight_view_pages($pages, $langsam, $ac, $route, 1000.0, 1025.0, 1000.0, 'flight:4d0107');
+check('Seiten: bei 60 Sekunden steht die Route das ganze Fenster', array_column($pages, 'id') === ['flight:4d0107:route'] && $pages[0]['to'] === 1025000);
+$pages = [];
+flight_view_pages($pages, $langsam, $ac, $route, 1050.0, 1075.0, 1000.0, 'flight:4d0107');
+check('Seiten: nach 60 Sekunden kommen Abflug und Ankunft', array_column($pages, 'id') === ['flight:4d0107:route', 'flight:4d0107:progress'] && $pages[1]['from'] === 1060000);
+
 /* Leerer Himmel: die eingestellte Seite, ohne Hinweis auf den Grund. Der rote Punkt
    unten rechts fiel am 19. September 2026 weg (CHANGELOG 44), und seit CHANGELOG 50
    raeumt ein Ausfall den Himmel gar nicht mehr: die letzte Liste gilt noch 60 Sekunden. */

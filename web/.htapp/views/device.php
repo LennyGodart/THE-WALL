@@ -26,6 +26,20 @@ $sw = static function (string $key, bool $checked, string $labelId, string $titl
 $row = static function (string $key, string $value, bool $checked, string $en, string $de) use ($on, $dis): string {
     return '<button type="button" class="rrow" role="radio" data-set="' . h($key) . '" data-value="' . h($value) . '" aria-checked="' . $on($checked) . '"' . $dis . '><span class="rdot"></span><span' . de($de) . '>' . h($en) . '</span></button>';
 };
+/* Regler mit Stufen fuer Sekunden (data-stops): Takt der Rotation und "Ansicht wechseln alle".
+   Sein Wert ist die Stufe, nicht die Sekunden, damit die Spanne auf eine schmale Spalte passt;
+   device.js rechnet um. Liegt ein gespeicherter Wert zwischen zwei Stufen, steht der Regler auf
+   der naechsten, und die Zahl daneben nennt den echten Wert. */
+$secRange = static function (string $id, string $key, array $stops, int $value, string $style) use ($dis): string {
+    $at = 0;
+    foreach ($stops as $i => $c) {
+        if (abs($c - $value) < abs($stops[$at] - $value)) {
+            $at = $i;
+        }
+    }
+    return '<input id="' . h($id) . '" data-set="' . h($key) . '" data-stops="' . implode(',', $stops) . '" type="range" min="0" max="' . (count($stops) - 1) . '" step="1" value="' . $at . '" aria-valuetext="' . $value . ' seconds" style="' . $style . '"' . $dis . '>';
+};
+$secShort = static fn(int $sec): string => $sec < 120 || $sec % 60 !== 0 ? $sec . ' S' : intdiv($sec, 60) . ' MIN';
 /* Ort des Geraets mit Suchfeld, bei Uhr und Wetter. Ein Punkt je Geraet, derselbe wie auf der
    Karte beim Flugradar. Gesucht wird ueber /api/geo nur auf Absenden, wie dort (Nominatim).
    $p macht die ids eindeutig. */
@@ -152,20 +166,12 @@ $placeCard = static function (string $p) use ($s, $cardLabel, $mono, $dis): stri
             <button type="button" class="chip" data-rotation="<?= $rid ?>" aria-pressed="<?= $on(in_array($rid, $s['rotation'], true)) ?>"<?= de($rde) ?><?= $dis ?>><?= $ren ?></button>
           <?php endforeach; ?>
         </div>
-        <?php /* Takt der Rotation. Der Regler rastet an ROTATION_CYCLES ein, sein Wert ist die
-                 Stufe, nicht die Sekunden: zehn Sekunden bis zehn Minuten linear waeren auf
-                 dieser schmalen Spalte drei Pixel je Schritt. device.js rechnet um. */
-              $cyc = frame_cycle($s);
-              $cycStop = 0;
-              foreach (ROTATION_CYCLES as $i => $c) {
-                  if (abs($c - $cyc) < abs(ROTATION_CYCLES[$cycStop] - $cyc)) {
-                      $cycStop = $i;
-                  }
-              } ?>
+        <?php /* Takt der Rotation, zehn Sekunden bis zehn Minuten: linear waeren das auf dieser
+                 schmalen Spalte drei Pixel je Schritt, deshalb Stufen. */ ?>
         <label for="d-cycle" style="display:block;margin:16px 0 0;<?= $mono ?>font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:#B4BCC3"<?= de('Modus wechseln alle') ?>>Change mode every</label>
         <div style="display:flex;align-items:center;gap:12px">
-          <input id="d-cycle" data-cycle type="range" min="0" max="<?= count(ROTATION_CYCLES) - 1 ?>" step="1" value="<?= $cycStop ?>" aria-valuetext="<?= $cyc ?> seconds" style="flex:1;min-width:0"<?= $dis ?>>
-          <output for="d-cycle" data-out="cycle" style="<?= $mono ?>font-size:14px;font-weight:600;color:#FFAA00;font-variant-numeric:tabular-nums;flex:0 0 auto;min-width:6ch;text-align:right"><?= $cyc < 120 || $cyc % 60 !== 0 ? $cyc . ' S' : intdiv($cyc, 60) . ' MIN' ?></output>
+          <?= $secRange('d-cycle', 'cycle', ROTATION_CYCLES, frame_cycle($s), 'flex:1;min-width:0') ?>
+          <output for="d-cycle" data-out="cycle" style="<?= $mono ?>font-size:14px;font-weight:600;color:#FFAA00;font-variant-numeric:tabular-nums;flex:0 0 auto;min-width:6ch;text-align:right"><?= $secShort(frame_cycle($s)) ?></output>
         </div>
         <p data-rot-summary style="margin:4px 0 0;<?= $mono ?>font-size:11px;line-height:1.5;color:#8B949C"></p>
 
@@ -321,18 +327,19 @@ $placeCard = static function (string $p) use ($s, $cardLabel, $mono, $dis): stri
 
           <label for="f-view" style="<?= $labelBlock ?>;margin-top:22px"<?= de('Ansicht wechseln alle') ?>>Change view every</label>
           <div style="display:flex;align-items:center;gap:12px">
-            <input id="f-view" data-set="flight.view" type="range" min="<?= FLIGHT_VIEW_MIN ?>" max="<?= FLIGHT_VIEW_MAX ?>" step="1" value="<?= (int) $s['flight']['view'] ?>" style="flex:1"<?= $dis ?>>
-            <span style="<?= $mono ?>font-size:15px;font-weight:600;color:#FFAA00;font-variant-numeric:tabular-nums;flex:0 0 auto"><span data-out="view"><?= (int) $s['flight']['view'] ?></span> S</span>
+            <?= $secRange('f-view', 'flight.view', FLIGHT_VIEW_STOPS, (int) $s['flight']['view'], 'flex:1;min-width:0') ?>
+            <output for="f-view" data-out="view" style="<?= $mono ?>font-size:15px;font-weight:600;color:#FFAA00;font-variant-numeric:tabular-nums;flex:0 0 auto;min-width:6ch;text-align:right"><?= $secShort((int) $s['flight']['view']) ?></output>
           </div>
-          <?php $round = 4 * (int) $s['flight']['view']; ?>
-          <p data-view-note style="<?= $note ?>"<?= de('Route, Abflug und Ankunft, Position, Messwerte: eine Runde dauert ' . $round . ' s. Ein neuer Flug beginnt mit der Route.') ?>>Route, departure and arrival, position, metrics: one round takes <?= $round ?> s. A new flight starts with the route.</p>
+          <?php /* Welche Ansichten, wie lange eine Runde, und ob sie in einen Platz der Rotation
+                   passt: das rechnet device.js aus dem Entwurf, wie bei der Rotation. */ ?>
+          <p data-view-note style="<?= $note ?>"></p>
         </article>
 
         <article style="background:#0B0D0F;box-shadow:0 0 0 1px #1B2126;padding:22px">
           <p id="f-views-label" style="<?= $cardLabel ?>"<?= de('Ansichten') ?>>Views</p>
           <p data-views-summary style="margin:0 0 14px;font-size:13.5px;line-height:1.5;color:#E8EAEC"></p>
           <button type="button" data-views-open class="btn-ghost"<?= $dis ?><?= de('Ansichten wählen') ?>>Choose views</button>
-          <p style="<?= $note ?>"<?= de('Im Fenster stehen alle vier nebeneinander, gerechnet mit dem Flug, der gerade da ist.') ?>>The window shows all four side by side, drawn with the flight that is up right now.</p>
+          <p style="<?= $note ?>"<?= de('Im Fenster stehen alle fünf nebeneinander, gerechnet mit dem Flug, der gerade da ist.') ?>>The window shows all five side by side, drawn with the flight that is up right now.</p>
         </article>
 
         <article style="background:#0B0D0F;box-shadow:0 0 0 1px #1B2126;padding:22px">
